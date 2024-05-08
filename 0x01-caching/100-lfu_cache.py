@@ -1,53 +1,55 @@
-#!/usr/bin/env python3
-"""Defines a LFUCache class that inherits from BaseCaching"""
+#!/usr/bin/python3
+""" 5. LFU caching
+"""
 
-BaseCaching = __import__('base_caching').BaseCaching
+from base_caching import BaseCaching
 
 
 class LFUCache(BaseCaching):
-    """A caching system using LFU algorithm"""
-
     def __init__(self):
-        """Initialize the LFUCache instance"""
+        """ Initializes the LFUCache instance
+        """
         super().__init__()
-        self.frequency = {}
+        self.frequency = {}  # Stores the frequency of each key
+        self.age = {}  # Stores the age of each key
+        self.counter = 0  # Tracks the current age
 
     def put(self, key, item):
-        """Assigns item to key in self.cache_data"""
-        if key is not None and item is not None:
-            if key in self.cache_data:
-                # If key exists, increment its frequency
-                self.frequency[key] += 1
-            else:
-                # If key doesn't exist, initialize its frequency
-                self.frequency[key] = 1
+        """ Adds an item to the cache
+        """
+        if key is None or item is None:
+            return
 
-            if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
-                # If cache is full, find the least frequency used item
-                min_freq = min(self.frequency.values())
-                least_freq_used_keys = [k for k, v in self.frequency.items() if v == min_freq]
-                # If there's more than one least frequency used item, use LRU to break the tie
-                if len(least_freq_used_keys) > 1:
-                    lru_key = min(self.cache_data, key=lambda k: self.cache_data[k]['time'])
-                    del self.cache_data[lru_key]
-                    del self.frequency[lru_key]
-                    print("DISCARD:", lru_key)
-                else:
-                    lfu_key = least_freq_used_keys[0]
-                    del self.cache_data[lfu_key]
-                    del self.frequency[lfu_key]
-                    print("DISCARD:", lfu_key)
+        if key in self.cache_data:
+            # Update existing key
+            self.cache_data[key] = item
+            self.frequency[key] += 1
+            self.age[key] = self.counter
+            return
 
-            self.cache_data[key] = {'value': item, 'time': self.time}
-            self.time += 1
+        if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
+            # Find least frequently used keys
+            lfu_keys = [k for k, v in self.frequency.items() if v == min(
+                self.frequency.values())]
+            # Find least recently used key among the least frequently used keys
+            lru_key = min(lfu_keys, key=lambda k: self.age[k])
+            # Remove least recently used key
+            del self.cache_data[lru_key]
+            del self.frequency[lru_key]
+            del self.age[lru_key]
+            print(f"DISCARD: {lru_key}")
+
+        self.cache_data[key] = item
+        self.frequency[key] = 1
+        self.age[key] = self.counter
 
     def get(self, key):
-        """Returns the value linked to key in self.cache_data"""
-        if key is not None and key in self.cache_data:
-            # Increment the frequency of the accessed key
-            self.frequency[key] += 1
-            # Update the access time of the accessed key
-            self.cache_data[key]['time'] = self.time
-            self.time += 1
-            return self.cache_data[key]['value']
-        return None
+        """ Retrieves an item by key
+        """
+        if key is None or key not in self.cache_data:
+            return None
+
+        # Update frequency and age for the accessed key
+        self.frequency[key] += 1
+        self.age[key] = self.counter
+        return self.cache_data[key]
