@@ -9,21 +9,20 @@ class LFUCache(BaseCaching):
     def __init__(self):
         """Initialize the LFUCache instance"""
         super().__init__()
-        self.frequency = {}  # Dictionary to store the frequency of each key
-        self.time = {}  # Dictionary to store the access time of each key
-        self.current_time = 0  # Initialize current_time
+        self.frequency = {} 
+        self.time = {}  
+        self.current_time = 0  
 
     def put(self, key, item):
         """Assigns item to the dictionary self.cache_data"""
         if key is None or item is None:
             return
 
-        # If key already exists, update its value and frequency
         if key in self.cache_data:
             self.cache_data[key] = item
             self.frequency[key] += 1
         else:
-            # If cache is full, discard the least frequently used item
+            
             if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
                 min_freq = min(self.frequency.values())
                 lfu_keys = [k for k, v in self.frequency.items() if v == min_freq]
@@ -33,7 +32,6 @@ class LFUCache(BaseCaching):
                 del self.time[lru_key]
                 print(f"DISCARD: {lru_key}")
 
-            # Add new item to cache
             self.cache_data[key] = item
             self.frequency[key] = 1
             self.time[key] = self.current_time
@@ -45,7 +43,6 @@ class LFUCache(BaseCaching):
         if key is None or key not in self.cache_data:
             return None
 
-        # Update the frequency and access time of the accessed key
         self.frequency[key] += 1
         self.time[key] = self.current_time
         self.current_time += 1
